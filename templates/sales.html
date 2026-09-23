@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نقطة البيع - نظام إدارة المطعم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1976d2;
+            --primary-gradient-start: #0b1f3a;
+            --primary-gradient-end: #1976d2;
+            --secondary-color: #0b1f3a;
+            --success-color: #06D6A0;
+            --danger-color: #EF476F;
+            --warning-color: #f4b942;
+            --dark-bg: #1a1a2e;
+            --card-bg: #16213e;
+        }
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #edf3fa 0%, #f8fbff 55%, #e6f0fa 100%);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: linear-gradient(270deg, #08182f 0%, #12335b 60%, #1976d2 100%);
+            padding: 18px 24px;
+            box-shadow: 0 8px 24px rgba(8, 24, 47, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .top-bar h4 {
+            margin: 0;
+            color: white;
+            font-weight: 700;
+        }
+
+        .top-bar .btn {
+            margin: 0 5px;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            background: rgba(255, 255, 255, 0.92);
+            padding: 14px 20px;
+            box-shadow: 0 8px 22px rgba(8, 24, 47, 0.1);
+            border: 1px solid #e2eaf4;
+            border-radius: 16px;
+            margin: 18px 24px 20px;
+        }
+
+        .btn-category {
+            background: #f4f7fb;
+            color: #29415f;
+            border: 1px solid #d8e3ef;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-category:hover {
+            background: #e9ecef;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .btn-category.active {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 6px 14px rgba(25, 118, 210, 0.3);
+        }
+
+        /* Item Cards */
+        .item-card {
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #dce6f0;
+            height: 100%;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(25, 118, 210, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        /* Cart Section */
+        .cart-section {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 12px 30px rgba(8, 24, 47, 0.15);
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            border: 1px solid #dce6f0;
+        }
+
+        .cart-header {
+            background: linear-gradient(135deg, #0b1f3a 0%, #1976d2 100%);
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .cart-header h5 {
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .cart-item {
+            background: #f5f8fc;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-right: 3px solid var(--primary-color);
+            border: 1px solid #e0e8f1;
+            transition: all 0.2s;
+        }
+
+        .cart-item:hover {
+            background: #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, #0b1f3a 0%, #1976d2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 3px 10px rgba(6, 214, 160, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn-complete {
+            background: linear-gradient(135deg, #06D6A0 0%, #00B894 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(6, 214, 160, 0.4);
+            transition: all 0.3s;
+        }
+
+        .btn-complete:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(6, 214, 160, 0.6);
+        }
+
+        .btn-hold {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #EF476F 0%, #D62828 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(239, 71, 111, 0.4);
+        }
+
+        /* Held Invoices Badge */
+        .held-badge {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            box-shadow: 0 3px 10px rgba(25, 118, 210, 0.35);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .held-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(25, 118, 210, 0.5);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            border-radius: 10px;
+        }
+
+        .main-content-placeholder {
+            display: none;
+        }
+
+        @media (max-width: 991px) {
+            .category-tabs {
+                margin: 14px 12px;
+            }
+
+            .top-bar {
+                padding: 14px;
+            }
+
+            .top-bar .d-flex {
+                flex-wrap: wrap;
+                gap: 10px !important;
+            }
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            background: var(--card-bg);
+            color: white;
+            border-radius: 20px;
+            border: none;
+        }
+
+        .modal-header {
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .held-invoice-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .held-invoice-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        /* Responsive Layout */
+        @media (max-width: 991px) {
+            .order-lg-1, .order-lg-2 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4><i class="fas fa-cash-register"></i> نقطة البيع - POS</h4>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-light text-dark" style="font-size: 1rem; padding: 8px 15px;">
+                    <i class="fas fa-box"></i> {{ items|length }} صنف
+                </span>
+                <span class="held-badge" onclick="showHeldInvoices()" id="heldBadge" style="display: none;">
+                    <i class="fas fa-pause-circle"></i> <span id="heldCount">0</span> فاتورة معلقة
+                </span>
+                <button class="btn btn-light" onclick="window.location.href='{{ url_for('index') }}'">
+                    <i class="fas fa-home"></i> الرئيسية
+                </button>
+                <button class="btn btn-danger" onclick="window.location.href='{{ url_for('logout') }}'">
+                    <i class="fas fa-sign-out-alt"></i> خروج
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+        <div class="d-flex flex-wrap justify-content-center">
+            <button class="btn btn-category active" onclick="filterCategory('all')" data-category="all">
+                <i class="fas fa-th"></i> الكل
+            </button>
+            {% for category in categories.keys()|sort %}
+            <button class="btn btn-category" onclick="filterCategory('{{ category }}')" data-category="{{ category }}">
+                {% if category == 'وجبات رئيسية' %}
+                    <i class="fas fa-hamburger"></i>
+                {% elif category == 'مشروبات' %}
+                    <i class="fas fa-coffee"></i>
+                {% elif category == 'بيتزا' %}
+                    <i class="fas fa-pizza-slice"></i>
+                {% elif category == 'سلطات' %}
+                    <i class="fas fa-salad"></i>
+                {% elif category == 'مقبلات' %}
+                    <i class="fas fa-cheese"></i>
+                {% elif category == 'حلويات' %}
+                    <i class="fas fa-ice-cream"></i>
+                {% else %}
+                    <i class="fas fa-utensils"></i>
+                {% endif %}
+                {{ category }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="container-fluid px-4 py-3">
+        <div class="row">
+            <!-- Cart Section (Right Side) -->
+            <div class="mb-3 order-lg-2 order-2" style="flex: 0 0 45%; max-width: 45%;">
+                <div class="cart-section">
+                    <div class="cart-header">
+                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> سلة المشتريات</h5>
+                    </div>
+
+                    <div style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;" id="cartItemsContainer">
+                        <div id="cartItems" class="text-center text-muted" style="padding: 20px;">
+                            السلة فارغة
+                        </div>
+                    </div>
+
+                    <!-- Customer Selection -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold" style="font-size: 0.85rem; margin-bottom: 5px;"><i class="fas fa-user"></i> العميل</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="selectedCustomerName" value="عميل نقدي" readonly style="background: white; border: 1px solid #dee2e6;">
+                            <input type="hidden" id="customerId" value="">
+                            <button class="btn btn-outline-primary" type="button" onclick="openCustomerModal()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="clearCustomer()" id="clearCustomerBtn" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="customerInfo" style="display: none; margin-top: 10px;">
+                            <div class="alert alert-info p-2 mb-0" style="background: #e7f5ff; border: 1px solid #74c0fc;">
+                                <small>
+                                    <strong>الرصيد:</strong> <span id="customerBalance">0.00</span> ريال<br>
+                                    <strong>الهاتف:</strong> <span id="customerPhone">-</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold" style="font-size: 0.85rem; margin-bottom: 5px;"><i class="fas fa-credit-card"></i> طريقة الدفع</label>
+                        <select class="form-select form-select-sm" id="paymentMethod" style="background: white; border: 1px solid #dee2e6;">
+                            <option value="cash">💵 نقدي</option>
+                            <option value="card">💳 شبكة</option>
+                            <option value="credit">📝 آجل</option>
+                        </select>
+                    </div>
+
+                    <!-- Paid Amount (for credit) -->
+                    <div class="mb-2" id="paidAmountDiv" style="display: none;">
+                        <label class="form-label fw-bold" style="font-size: 0.85rem; margin-bottom: 5px;">المبلغ المدفوع</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" id="paidAmount" value="0" style="background: white; border: 1px solid #dee2e6;">
+                        <small class="text-muted" style="font-size: 0.75rem;">المتبقي: <span id="remainingAmount">0.00</span> ريال</small>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold" style="font-size: 0.85rem; margin-bottom: 5px;"><i class="fas fa-sticky-note"></i> ملاحظات</label>
+                        <textarea class="form-control form-control-sm" id="notes" rows="2" placeholder="أضف ملاحظات..." style="background: white; border: 1px solid #dee2e6;"></textarea>
+                    </div>
+
+                    <!-- Total Amount and Complete Sale Button -->
+                    <div class="row g-2 mt-2">
+                        <div class="col-6">
+                            <div class="total-section" style="min-height: 85px;">
+                                <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px;">الإجمالي</div>
+                                <div id="totalAmount" style="font-size: 2rem; font-weight: 700; line-height: 1;">0.00 ريال</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-complete w-100" onclick="completeSale()" style="min-height: 85px; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 15px;">
+                                <i class="fas fa-check-circle" style="margin-left: 8px; font-size: 1.3rem;"></i> إتمام البيع
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row g-2 mt-2">
+                        <div class="col-6">
+                            <button class="btn btn-hold btn-sm w-100" onclick="holdInvoice()" style="padding: 6px;">
+                                <i class="fas fa-pause-circle"></i> تعليق
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-clear btn-sm w-100" onclick="clearCart()" style="padding: 6px;">
+                                <i class="fas fa-trash-alt"></i> مسح
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Section (Left Side) -->
+            <div class="mb-3 order-lg-1 order-1" style="flex: 0 0 55%; max-width: 55%;">
+                <div class="mb-3">
+                    <input type="text" id="searchItems" class="form-control form-control-lg" placeholder="🔍 ابحث عن صنف بالاسم أو الكود..." style="background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                </div>
+                <div style="max-height: calc(100vh - 250px); overflow-y: auto; padding-left: 10px;">
+                    <div class="row" id="itemsGrid">
+                        {% for item in items %}
+                        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3 item-box" data-name="{{ item.item_name|lower }}" data-code="{{ item.item_code }}" data-category="{{ item.category if item.category else 'غير مصنف' }}">
+                            <div class="card item-card" onclick="addToCart({{ item.id }}, '{{ item.item_name }}', {{ item.price }}, {{ item.quantity }})">
+                                <div class="card-body text-center p-2">
+                                    <div style="font-size: 2rem; margin-bottom: 5px;">
+                                        {% if item.category == 'وجبات رئيسية' %}
+                                            🍔
+                                        {% elif item.category == 'مشروبات' %}
+                                            ☕
+                                        {% elif item.category == 'بيتزا' %}
+                                            🍕
+                                        {% elif item.category == 'سلطات' %}
+                                            🥗
+                                        {% elif item.category == 'مقبلات' %}
+                                            🧀
+                                        {% elif item.category == 'حلويات' %}
+                                            🍨
+                                        {% else %}
+                                            📦
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="mb-1" style="font-size: 0.9rem;">{{ item.item_name }}</h6>
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">{{ item.item_code }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-info" style="font-size: 0.7rem;">{{ item.quantity }}</span>
+                                        <strong style="color: var(--primary-color); font-size: 0.85rem;">{{ "%.2f"|format(item.price) }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Selection Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0b1f3a 0%, #1976d2 100%); color: white;">
+                <h5 class="modal-title" id="customerModalLabel">
+                    <i class="fas fa-users"></i> اختيار العميل
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control form-control-lg" id="searchCustomer" placeholder="🔍 ابحث عن عميل بالاسم أو الرقم أو الهاتف...">
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover">
+                        <thead style="position: sticky; top: 0; background: white; z-index: 1;">
+                            <tr>
+                                <th>رقم العميل</th>
+                                <th>الاسم</th>
+                                <th>الهاتف</th>
+                                <th>الرصيد</th>
+                                <th>اختيار</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTableBody">
+                            {% for customer in customers %}
+                            <tr class="customer-row"
+                                data-id="{{ customer.id }}"
+                                data-name="{{ customer.customer_name }}"
+                                data-code="{{ customer.customer_code }}"
+                                data-phone="{{ customer.phone if customer.phone else '-' }}"
+                                data-balance="{{ customer.balance }}">
+                                <td>{{ customer.customer_code }}</td>
+                                <td><strong>{{ customer.customer_name }}</strong></td>
+                                <td>{{ customer.phone if customer.phone else '-' }}</td>
+                                <td>
+                                    <span class="badge {% if customer.balance > 0 %}bg-danger{% elif customer.balance < 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ "%.2f"|format(customer.balance) }} ريال
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="selectCustomer({{ customer.id }}, '{{ customer.customer_name }}', '{{ customer.phone if customer.phone else '-' }}', {{ customer.balance }})">
+                                        <i class="fas fa-check"></i> اختيار
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Held Invoices Modal -->
+<div class="modal fade" id="heldInvoicesModal" tabindex="-1" aria-labelledby="heldInvoicesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="heldInvoicesModalLabel">
+                    <i class="fas fa-pause-circle"></i> الفواتير المعلقة
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="heldInvoicesList">
+                    <p class="text-center text-muted">لا توجد فواتير معلقة</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.item-box {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-category {
+    background: white;
+    color: #12335b;
+    border: 2px solid white;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 25px;
+    transition: all 0.3s;
+    margin: 3px;
+}
+
+.btn-category:hover {
+    background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.25);
+}
+
+.btn-category.active {
+    background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.35);
+}
+
+.category-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.customer-row {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.customer-row:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+}
+
+.modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.modal-header {
+    border-bottom: 3px solid var(--primary-color);
+}
+</style>
+
+<script>
+let cart = [];
+let currentCategory = 'all';
+let heldInvoices = JSON.parse(localStorage.getItem('heldInvoices') || '[]');
+
+// Update held invoices badge
+function updateHeldBadge() {
+    const badge = document.getElementById('heldBadge');
+    const count = document.getElementById('heldCount');
+    if (heldInvoices.length > 0) {
+        badge.style.display = 'inline-block';
+        count.textContent = heldInvoices.length;
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Initialize
+updateHeldBadge();
+
+// Filter by category
+function filterCategory(category) {
+    currentCategory = category;
+
+    // Update active button
+    document.querySelectorAll('.btn-category').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-category="${category}"]`).classList.add('active');
+
+    // Filter items
+    document.querySelectorAll('.item-box').forEach(box => {
+        if (category === 'all' || box.dataset.category === category) {
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    });
+}
+
+// Search items
+document.getElementById('searchItems').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('.item-box').forEach(box => {
+        const name = box.dataset.name;
+        const code = box.dataset.code.toLowerCase();
+        const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
+        const matchesCategory = currentCategory === 'all' || box.dataset.category === currentCategory;
+
+        if (matchesSearch && matchesCategory) {
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    });
+});
+
+// Payment method change
+document.getElementById('paymentMethod').addEventListener('change', function() {
+    updatePaidAmountVisibility();
+});
+
+// Update paid amount input when total changes
+document.getElementById('paidAmount').addEventListener('input', function() {
+    updateRemainingAmount();
+});
+
+function updatePaidAmountVisibility() {
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    if (paymentMethod === 'credit') {
+        document.getElementById('paidAmountDiv').style.display = 'block';
+        updateRemainingAmount();
+    } else {
+        document.getElementById('paidAmountDiv').style.display = 'none';
+    }
+}
+
+function updateRemainingAmount() {
+    const total = parseFloat(document.getElementById('totalAmount').textContent.replace(' ريال', ''));
+    const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+    const remaining = total - paid;
+    document.getElementById('remainingAmount').textContent = remaining.toFixed(2);
+}
+
+// Customer Modal Functions
+function openCustomerModal() {
+    const modal = new bootstrap.Modal(document.getElementById('customerModal'));
+    modal.show();
+}
+
+function selectCustomer(id, name, phone, balance) {
+    document.getElementById('customerId').value = id;
+    document.getElementById('selectedCustomerName').value = name;
+    document.getElementById('customerPhone').textContent = phone;
+    document.getElementById('customerBalance').textContent = balance.toFixed(2);
+    document.getElementById('customerInfo').style.display = 'block';
+    document.getElementById('clearCustomerBtn').style.display = 'inline-block';
+
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('customerModal'));
+    modal.hide();
+}
+
+function clearCustomer() {
+    document.getElementById('customerId').value = '';
+    document.getElementById('selectedCustomerName').value = 'عميل نقدي';
+    document.getElementById('customerInfo').style.display = 'none';
+    document.getElementById('clearCustomerBtn').style.display = 'none';
+}
+
+// Hold Invoice
+function holdInvoice() {
+    if (cart.length === 0) {
+        alert('السلة فارغة!');
+        return;
+    }
+
+    const invoice = {
+        id: Date.now(),
+        date: new Date().toLocaleString('ar-SA'),
+        cart: [...cart],
+        customerId: document.getElementById('customerId').value,
+        customerName: document.getElementById('selectedCustomerName').value,
+        paymentMethod: document.getElementById('paymentMethod').value,
+        notes: document.getElementById('notes').value,
+        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    };
+
+    heldInvoices.push(invoice);
+    localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
+    updateHeldBadge();
+
+    // Clear cart
+    clearCart();
+
+    alert('تم تعليق الفاتورة بنجاح!');
+}
+
+// Show Held Invoices
+function showHeldInvoices() {
+    const modal = new bootstrap.Modal(document.getElementById('heldInvoicesModal'));
+    const list = document.getElementById('heldInvoicesList');
+
+    if (heldInvoices.length === 0) {
+        list.innerHTML = '<p class="text-center text-muted">لا توجد فواتير معلقة</p>';
+    } else {
+        list.innerHTML = heldInvoices.map((inv, index) => `
+            <div class="held-invoice-item" onclick="loadHeldInvoice(${index})">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1"><i class="fas fa-receipt"></i> فاتورة #${inv.id}</h6>
+                        <small><i class="fas fa-clock"></i> ${inv.date}</small><br>
+                        <small><i class="fas fa-user"></i> ${inv.customerName}</small>
+                    </div>
+                    <div class="text-end">
+                        <h5 class="mb-1 text-warning">${inv.total.toFixed(2)} ريال</h5>
+                        <small>${inv.cart.length} صنف</small><br>
+                        <button class="btn btn-sm btn-danger mt-2" onclick="event.stopPropagation(); deleteHeldInvoice(${index})">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    modal.show();
+}
+
+// Load Held Invoice
+function loadHeldInvoice(index) {
+    const invoice = heldInvoices[index];
+
+    // Load cart
+    cart = [...invoice.cart];
+    updateCart();
+
+    // Load customer
+    if (invoice.customerId) {
+        document.getElementById('customerId').value = invoice.customerId;
+        document.getElementById('selectedCustomerName').value = invoice.customerName;
+        document.getElementById('clearCustomerBtn').style.display = 'inline-block';
+    }
+
+    // Load payment method and notes
+    document.getElementById('paymentMethod').value = invoice.paymentMethod;
+    document.getElementById('notes').value = invoice.notes;
+
+    // Remove from held invoices
+    heldInvoices.splice(index, 1);
+    localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
+    updateHeldBadge();
+
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('heldInvoicesModal'));
+    modal.hide();
+}
+
+// Delete Held Invoice
+function deleteHeldInvoice(index) {
+    if (confirm('هل أنت متأكد من حذف هذه الفاتورة المعلقة؟')) {
+        heldInvoices.splice(index, 1);
+        localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
+        updateHeldBadge();
+        showHeldInvoices(); // Refresh the list
+    }
+}
+
+// Search customers in modal
+document.getElementById('searchCustomer').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('.customer-row').forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        const code = row.dataset.code.toLowerCase();
+        const phone = row.dataset.phone.toLowerCase();
+
+        if (name.includes(searchTerm) || code.includes(searchTerm) || phone.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+function addToCart(itemId, itemName, price, availableQty) {
+    const existingItem = cart.find(item => item.id === itemId);
+    
+    if (existingItem) {
+        if (existingItem.quantity < availableQty) {
+            existingItem.quantity++;
+            existingItem.total = existingItem.quantity * existingItem.price;
+        } else {
+            alert('الكمية المتوفرة غير كافية');
+            return;
+        }
+    } else {
+        cart.push({
+            id: itemId,
+            name: itemName,
+            price: price,
+            quantity: 1,
+            total: price,
+            availableQty: availableQty
+        });
+    }
+    
+    updateCart();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCart();
+}
+
+function updateQuantity(index, newQty) {
+    if (newQty <= 0) {
+        removeFromCart(index);
+        return;
+    }
+    
+    if (newQty > cart[index].availableQty) {
+        alert('الكمية المتوفرة غير كافية');
+        return;
+    }
+    
+    cart[index].quantity = newQty;
+    cart[index].total = cart[index].quantity * cart[index].price;
+    updateCart();
+}
+
+function updateCart() {
+    const cartContainer = document.getElementById('cartItems');
+
+    if (cart.length === 0) {
+        cartContainer.innerHTML = '<div class="text-center text-muted" style="padding: 20px;">السلة فارغة</div>';
+        document.getElementById('totalAmount').textContent = '0.00 ريال';
+        return;
+    }
+
+    let html = '';
+    let total = 0;
+
+    cart.forEach((item, index) => {
+        total += item.total;
+        html += `
+            <div class="cart-item">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong style="color: #333; font-size: 0.85rem;">${item.name}</strong>
+                    <button class="btn btn-sm btn-danger" onclick="removeFromCart(${index})" style="padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group btn-group-sm" role="group" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${index}, ${item.quantity - 1})" style="border-radius: 4px 0 0 4px; padding: 2px 6px; font-size: 0.75rem;">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" class="form-control text-center" value="${item.quantity}"
+                               onchange="updateQuantity(${index}, parseInt(this.value))"
+                               style="width: 40px; background: white; color: #333; border: 1px solid #dee2e6; font-weight: 600; font-size: 0.8rem; padding: 2px;">
+                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${index}, ${item.quantity + 1})" style="border-radius: 0 4px 4px 0; padding: 2px 6px; font-size: 0.75rem;">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="text-end">
+                        <div style="font-size: 0.7rem; color: #666;">${item.price.toFixed(2)} × ${item.quantity}</div>
+                        <strong style="color: var(--primary-color); font-size: 0.9rem;">${item.total.toFixed(2)} ر.س</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    cartContainer.innerHTML = html;
+    document.getElementById('totalAmount').textContent = total.toFixed(2) + ' ريال';
+
+    // Update remaining amount if credit payment
+    if (document.getElementById('paymentMethod').value === 'credit') {
+        updateRemainingAmount();
+    }
+}
+
+function clearCart() {
+    if (confirm('هل أنت متأكد من مسح السلة؟')) {
+        cart = [];
+        updateCart();
+    }
+}
+
+function completeSale() {
+    if (cart.length === 0) {
+        alert('السلة فارغة');
+        return;
+    }
+    
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const customerId = document.getElementById('customerId').value;
+    
+    if (paymentMethod === 'credit' && !customerId) {
+        alert('يجب اختيار عميل للبيع الآجل');
+        return;
+    }
+    
+    const total = cart.reduce((sum, item) => sum + item.total, 0);
+    let paidAmount = total;
+    let remainingAmount = 0;
+    
+    if (paymentMethod === 'credit') {
+        paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+        remainingAmount = total - paidAmount;
+    }
+    
+    const saleData = {
+        customer_id: customerId || null,
+        total_amount: total,
+        payment_method: paymentMethod,
+        paid_amount: paidAmount,
+        remaining_amount: remainingAmount,
+        notes: document.getElementById('notes').value,
+        items: cart.map(item => ({
+            item_id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.total
+        }))
+    };
+    
+    fetch('/sales/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(saleData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم إتمام البيع بنجاح\nرقم الفاتورة: ' + data.sale_number);
+            cart = [];
+            updateCart();
+            document.getElementById('customerId').value = '';
+            document.getElementById('paymentMethod').value = 'cash';
+            document.getElementById('notes').value = '';
+            document.getElementById('paidAmount').value = '0';
+        } else {
+            alert('حدث خطأ: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('حدث خطأ في الاتصال');
+        console.error(error);
+    });
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

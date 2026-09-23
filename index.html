@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - نظام إدارة المطعم{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4" style="color: white; font-weight: 700;">
+        <i class="fas fa-chart-line"></i> لوحة التحكم
+    </h2>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card primary">
+                <div class="icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h3 style="color: var(--primary-color); font-weight: 700; font-size: 1.5rem;">{{ "%.2f"|format(total_sales) }} ريال</h3>
+                <p class="text-muted mb-0" style="font-size: 0.9rem;">إجمالي المبيعات</p>
+            </div>
+        </div>
+
+        <div class="col-xl col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card success">
+                <div class="icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 style="color: var(--success-color); font-weight: 700; font-size: 1.5rem;">{{ "%.2f"|format(total_purchases) }} ريال</h3>
+                <p class="text-muted mb-0" style="font-size: 0.9rem;">إجمالي المشتريات</p>
+            </div>
+        </div>
+
+        <div class="col-xl col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card warning">
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 style="color: var(--warning-color); font-weight: 700; font-size: 1.5rem;">{{ total_customers }}</h3>
+                <p class="text-muted mb-0" style="font-size: 0.9rem;">عدد العملاء</p>
+            </div>
+        </div>
+
+        <div class="col-xl col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card info">
+                <div class="icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <h3 style="color: var(--secondary-color); font-weight: 700; font-size: 1.5rem;">{{ total_suppliers }}</h3>
+                <p class="text-muted mb-0" style="font-size: 0.9rem;">عدد الموردين</p>
+            </div>
+        </div>
+
+        <div class="col-xl col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card info">
+                <div class="icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h3 style="color: var(--secondary-color); font-weight: 700; font-size: 1.5rem;">{{ total_items }}</h3>
+                <p class="text-muted mb-0" style="font-size: 0.9rem;">عدد الأصناف</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Sales -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-receipt"></i> آخر المبيعات
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>رقم الفاتورة</th>
+                                    <th>العميل</th>
+                                    <th>المبلغ الإجمالي</th>
+                                    <th>طريقة الدفع</th>
+                                    <th>الحالة</th>
+                                    <th>التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if recent_sales %}
+                                    {% for sale in recent_sales %}
+                                    <tr>
+                                        <td><strong>{{ sale.sale_number }}</strong></td>
+                                        <td>
+                                            {% if sale.customer %}
+                                                {{ sale.customer.customer_name }}
+                                            {% else %}
+                                                <span class="text-muted">عميل نقدي</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><strong>{{ "%.2f"|format(sale.total_amount) }} ريال</strong></td>
+                                        <td>
+                                            {% if sale.payment_method == 'cash' %}
+                                                <span class="badge bg-success">نقدي</span>
+                                            {% elif sale.payment_method == 'card' %}
+                                                <span class="badge bg-primary">شبكة</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">آجل</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if sale.status == 'completed' %}
+                                                <span class="badge bg-success">مكتمل</span>
+                                            {% elif sale.status == 'pending' %}
+                                                <span class="badge bg-warning">معلق</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">ملغي</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ sale.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">
+                                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                            لا توجد مبيعات حتى الآن
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bolt"></i> إجراءات سريعة
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-primary btn-lg w-100" id="newSaleBtn">
+                                <i class="fas fa-cash-register fa-2x d-block mb-2"></i>
+                                فاتورة جديدة
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-success btn-lg w-100" id="newItemBtn">
+                                <i class="fas fa-plus-circle fa-2x d-block mb-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-info btn-lg w-100" id="newCustomerBtn">
+                                <i class="fas fa-user-plus fa-2x d-block mb-2"></i>
+                                إضافة عميل
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-warning btn-lg w-100" id="newSupplierBtn">
+                                <i class="fas fa-truck fa-2x d-block mb-2"></i>
+                                إضافة مورد
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Quick action buttons
+    document.getElementById('newSaleBtn').addEventListener('click', function() {
+        window.location.href = '{{ url_for("sales") }}';
+    });
+
+    document.getElementById('newItemBtn').addEventListener('click', function() {
+        window.location.href = '{{ url_for("items") }}';
+    });
+
+    document.getElementById('newCustomerBtn').addEventListener('click', function() {
+        window.location.href = '{{ url_for("customers") }}';
+    });
+
+    document.getElementById('newSupplierBtn').addEventListener('click', function() {
+        window.location.href = '{{ url_for("suppliers") }}';
+    });
+</script>
+{% endblock %}
+

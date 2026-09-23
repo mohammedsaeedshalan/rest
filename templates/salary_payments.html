@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}دفعات راتب {{ employee.employee_name }} - نظام إدارة المطعم{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: white; font-weight: 700;"><i class="fas fa-money-check-alt"></i> دفعات راتب: {{ employee.employee_name }}</h2>
+        <a href="{{ url_for('employees') }}" class="btn btn-secondary"><i class="fas fa-arrow-right"></i> رجوع للعاملين</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body"><div class="row">
+            <div class="col-md-4"><strong>اسم العامل:</strong> {{ employee.employee_name }}</div>
+            <div class="col-md-4"><strong>الجنسية:</strong> {{ employee.nationality }}</div>
+            <div class="col-md-4"><strong>الراتب الشهري:</strong> <span class="badge bg-primary">{{ "%.2f"|format(employee.monthly_salary) }} ريال</span></div>
+        </div></div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-plus"></i> تسجيل دفعة راتب</div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_salary_payment', employee_id=employee.id) }}">
+                        <div class="mb-3"><label class="form-label">شهر الراتب</label><input type="month" class="form-control" name="payment_month" required></div>
+                        <div class="mb-3"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0" class="form-control" name="amount" value="{{ employee.monthly_salary }}" required></div>
+                        <div class="mb-3"><label class="form-label">طريقة الدفع</label><select class="form-select" name="payment_method" required><option value="cash">نقدي</option><option value="card">شبكة</option><option value="bank_transfer">تحويل بنكي</option></select></div>
+                        <div class="mb-3"><label class="form-label">ملاحظات</label><textarea class="form-control" name="notes" rows="3"></textarea></div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-save"></i> حفظ الدفعة</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-list"></i> سجل دفعات الراتب</div>
+                <div class="card-body"><div class="table-responsive"><table class="table table-hover">
+                    <thead><tr><th>رقم الدفعة</th><th>الشهر</th><th>المبلغ</th><th>طريقة الدفع</th><th>الموظف</th><th>الإجراء</th></tr></thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td><strong>{{ payment.payment_number }}</strong></td><td>{{ payment.payment_month }}</td><td><span class="badge bg-success">{{ "%.2f"|format(payment.amount) }} ريال</span></td>
+                            <td>{% if payment.payment_method == 'cash' %}نقدي{% elif payment.payment_method == 'card' %}شبكة{% else %}تحويل بنكي{% endif %}</td><td>{{ payment.user.username }}</td>
+                            <td><button class="btn btn-sm btn-primary" onclick="editPayment({{ payment.id }}, {{ payment.amount }}, '{{ payment.payment_month }}', '{{ payment.payment_method }}', {{ (payment.notes or '')|tojson }})"><i class="fas fa-edit"></i> تعديل</button></td>
+                        </tr>
+                        {% else %}<tr><td colspan="6" class="text-center text-muted">لا توجد دفعات مسجلة</td></tr>{% endfor %}
+                    </tbody>
+                    <tfoot><tr class="table-info"><td colspan="2"><strong>الإجمالي</strong></td><td colspan="4"><strong class="text-primary">{{ "%.2f"|format(payments|sum(attribute='amount')) }} ريال</strong></td></tr></tfoot>
+                </table></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end)); color: white;"><h5 class="modal-title"><i class="fas fa-edit"></i> تعديل دفعة الراتب</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form method="POST" id="editPaymentForm">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">شهر الراتب</label><input type="month" class="form-control" name="payment_month" id="edit_payment_month" required></div>
+                    <div class="mb-3"><label class="form-label">المبلغ</label><input type="number" step="0.01" min="0" class="form-control" name="amount" id="edit_payment_amount" required></div>
+                    <div class="mb-3"><label class="form-label">طريقة الدفع</label><select class="form-select" name="payment_method" id="edit_payment_method" required><option value="cash">نقدي</option><option value="card">شبكة</option><option value="bank_transfer">تحويل بنكي</option></select></div>
+                    <div class="mb-3"><label class="form-label">ملاحظات</label><textarea class="form-control" name="notes" id="edit_payment_notes" rows="3"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ التعديل</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editPayment(id, amount, month, method, notes) {
+    document.getElementById('editPaymentForm').action = '/salary-payments/edit/' + id;
+    document.getElementById('edit_payment_amount').value = amount;
+    document.getElementById('edit_payment_month').value = month;
+    document.getElementById('edit_payment_method').value = method;
+    document.getElementById('edit_payment_notes').value = notes;
+    new bootstrap.Modal(document.getElementById('editPaymentModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة المطعم{% endblock %}</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Google Fonts - Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #55138b;
+            --primary-gradient-start: #8B4513;
+            --primary-gradient-end: #D2691E;
+            --secondary-color: #004E89;
+            --success-color: #06D6A0;
+            --warning-color: #CD853F;
+            --danger-color: #EF476F;
+            --dark-color: #1A1A2E;
+            --light-color: #F7F7F7;
+        }
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #797c89 0%, #14066f 100%);
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #003366 100%) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin: 0 5px;
+        }
+        
+        .nav-link:hover {
+            color: var(--warning-color) !important;
+            transform: translateY(-2px);
+        }
+        
+        .sidebar {
+            background: white;
+            min-height: calc(100vh - 56px);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px 0;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark-color) !important;
+            padding: 12px 20px;
+            margin: 5px 10px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white !important;
+            transform: translateX(-5px);
+        }
+        
+        .sidebar .nav-link i {
+            margin-left: 10px;
+            width: 20px;
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .stat-card .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card.primary { border-right: 5px solid var(--primary-color); }
+        .stat-card.primary .icon { color: var(--primary-color); }
+        
+        .stat-card.success { border-right: 5px solid var(--success-color); }
+        .stat-card.success .icon { color: var(--success-color); }
+        
+        .stat-card.warning { border-right: 5px solid var(--warning-color); }
+        .stat-card.warning .icon { color: var(--warning-color); }
+        
+        .stat-card.info { border-right: 5px solid var(--secondary-color); }
+        .stat-card.info .icon { color: var(--secondary-color); }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #05B88A 100%);
+            border: none;
+            border-radius: 10px;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #D63E5F 100%);
+            border: none;
+            border-radius: 10px;
+        }
+        
+        .table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #003366 100%);
+            color: white;
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(255, 107, 53, 0.1);
+            transform: scale(1.01);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            padding: 10px 15px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-utensils"></i> نظام إدارة المطعم
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> الرئيسية
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> {{ current_user.full_name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-cog"></i> الإعدادات
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{{ url_for('index') }}">
+                        <i class="fas fa-chart-line"></i> لوحة التحكم
+                    </a>
+                    <a class="nav-link" href="{{ url_for('sales') }}" id="salesLink">
+                        <i class="fas fa-cash-register"></i> نقطة البيع
+                    </a>
+                    <a class="nav-link" href="{{ url_for('items') }}" id="itemsLink">
+                        <i class="fas fa-box"></i> الأصناف
+                    </a>
+                    <a class="nav-link" href="{{ url_for('customers') }}" id="customersLink">
+                        <i class="fas fa-users"></i> العملاء
+                    </a>
+                    <a class="nav-link" href="{{ url_for('suppliers') }}" id="suppliersLink">
+                        <i class="fas fa-truck"></i> الموردين
+                    </a>
+                    <a class="nav-link" href="{{ url_for('purchases') }}" id="purchasesLink">
+                        <i class="fas fa-shopping-cart"></i> المشتريات
+                    </a>
+                    <hr>
+                    <a class="nav-link" href="{{ url_for('sales_report') }}" id="salesReportLink">
+                        <i class="fas fa-file-invoice"></i> تقارير المبيعات
+                    </a>
+                    <a class="nav-link" href="{{ url_for('customers_report') }}" id="customersReportLink">
+                        <i class="fas fa-file-alt"></i> تقارير العملاء
+                    </a>
+                    <a class="nav-link" href="{{ url_for('purchases_report') }}" id="purchasesReportLink">
+                        <i class="fas fa-file-contract"></i> تقارير المشتريات
+                    </a>
+                    <a class="nav-link" href="{{ url_for('suppliers_report') }}" id="suppliersReportLink">
+                        <i class="fas fa-file-invoice-dollar"></i> تقارير الموردين
+                    </a>
+                    <a class="nav-link" href="{{ url_for('customer_payments_report') }}" id="customerPaymentsReportLink">
+                        <i class="fas fa-money-check-alt"></i> تقارير دفعات العملاء
+                    </a>
+                    <a class="nav-link" href="{{ url_for('supplier_payments_report') }}" id="supplierPaymentsReportLink">
+                        <i class="fas fa-hand-holding-usd"></i> تقارير دفعات الموردين
+                    </a>
+                    {% if current_user.role == 'admin' %}
+                    <hr>
+                    <a class="nav-link" href="{{ url_for('users') }}" id="usersLink">
+                        <i class="fas fa-user-shield"></i> المستخدمين
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+        {% block login_content %}{% endblock %}
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

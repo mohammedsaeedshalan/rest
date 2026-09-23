@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}دفعات العميل - {{ customer.customer_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: white; font-weight: 700;">
+            <i class="fas fa-money-bill-wave"></i> دفعات العميل: {{ customer.customer_name }}
+        </h2>
+        <a href="{{ url_for('customers') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> رجوع
+        </a>
+    </div>
+
+    <!-- Customer Info Card -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>رقم العميل:</strong> {{ customer.customer_code }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>الهاتف:</strong> {{ customer.phone if customer.phone else '-' }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>العنوان:</strong> {{ customer.address if customer.address else '-' }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>الرصيد الحالي:</strong> 
+                            <span class="badge {% if customer.balance > 0 %}bg-danger{% elif customer.balance < 0 %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                                {{ "%.2f"|format(customer.balance) }} ريال
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Add Payment Form -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-plus"></i> إضافة دفعة جديدة
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_payment', customer_id=customer.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control" name="amount" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
+                            <select class="form-select" name="payment_method" required>
+                                <option value="cash">نقدي</option>
+                                <option value="card">شبكة</option>
+                                <option value="bank_transfer">تحويل بنكي</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">ملاحظات</label>
+                            <textarea class="form-control" name="notes" rows="3"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save"></i> حفظ الدفعة
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments List -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-list"></i> سجل الدفعات
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>رقم الدفعة</th>
+                                    <th>التاريخ</th>
+                                    <th>المبلغ</th>
+                                    <th>طريقة الدفع</th>
+                                    <th>الموظف</th>
+                                    <th>ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if payments %}
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td><strong>{{ payment.payment_number }}</strong></td>
+                                        <td>{{ payment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <span class="badge bg-success">{{ "%.2f"|format(payment.amount) }} ريال</span>
+                                        </td>
+                                        <td>
+                                            {% if payment.payment_method == 'cash' %}
+                                                <i class="fas fa-money-bill"></i> نقدي
+                                            {% elif payment.payment_method == 'card' %}
+                                                <i class="fas fa-credit-card"></i> شبكة
+                                            {% else %}
+                                                <i class="fas fa-university"></i> تحويل بنكي
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ payment.user.username }}</td>
+                                        <td>{{ payment.notes if payment.notes else '-' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">لا توجد دفعات مسجلة</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                            {% if payments %}
+                            <tfoot>
+                                <tr class="table-info">
+                                    <td colspan="2"><strong>إجمالي الدفعات:</strong></td>
+                                    <td colspan="4">
+                                        <strong class="text-success">
+                                            {{ "%.2f"|format(payments|sum(attribute='amount')) }} ريال
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

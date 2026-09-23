@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الموردين - نظام إدارة المطعم{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: white; font-weight: 700;">
+            <i class="fas fa-truck"></i> إدارة الموردين
+        </h2>
+        <div class="d-flex gap-2">
+            <input type="text" id="searchSuppliers" class="form-control" placeholder="ابحث عن مورد..." style="width: 300px;">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                <i class="fas fa-truck-loading"></i> إضافة مورد جديد
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-list"></i> قائمة الموردين
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="suppliersTable">
+                    <thead>
+                        <tr>
+                            <th>رقم المورد</th>
+                            <th>اسم المورد</th>
+                            <th>العنوان</th>
+                            <th>رقم الجوال</th>
+                            <th>الرصيد</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                        <tr>
+                            <td><strong>{{ supplier.supplier_code }}</strong></td>
+                            <td>{{ supplier.supplier_name }}</td>
+                            <td>{{ supplier.address or '-' }}</td>
+                            <td>{{ supplier.phone or '-' }}</td>
+                            <td>
+                                {% if supplier.balance > 0 %}
+                                    <span class="badge bg-danger">{{ "%.2f"|format(supplier.balance) }} ريال</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ "%.2f"|format(supplier.balance) }} ريال</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('supplier_payments', supplier_id=supplier.id) }}" class="btn btn-sm btn-success" title="الدفعات">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </a>
+                                <button class="btn btn-sm btn-primary" onclick="editSupplier({{ supplier.id }}, {{ supplier.supplier_code|tojson }}, {{ supplier.supplier_name|tojson }}, {{ (supplier.address or '')|tojson }}, {{ (supplier.phone or '')|tojson }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if current_user.role in ['admin', 'manager'] %}
+                                <a href="{{ url_for('delete_supplier', id=supplier.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا المورد؟')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted">لا توجد موردين مسجلين</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addSupplierModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-truck-loading"></i> إضافة مورد جديد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_supplier') }}">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">رقم المورد</label><input type="text" class="form-control" name="supplier_code" required></div>
+                    <div class="mb-3"><label class="form-label">اسم المورد</label><input type="text" class="form-control" name="supplier_name" required></div>
+                    <div class="mb-3"><label class="form-label">العنوان</label><input type="text" class="form-control" name="address"></div>
+                    <div class="mb-3"><label class="form-label">رقم الجوال</label><input type="text" class="form-control" name="phone"></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editSupplierModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> تعديل المورد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editSupplierForm">
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">رقم المورد</label><input type="text" class="form-control" name="supplier_code" id="edit_supplier_code" required></div>
+                    <div class="mb-3"><label class="form-label">اسم المورد</label><input type="text" class="form-control" name="supplier_name" id="edit_supplier_name" required></div>
+                    <div class="mb-3"><label class="form-label">العنوان</label><input type="text" class="form-control" name="address" id="edit_supplier_address"></div>
+                    <div class="mb-3"><label class="form-label">رقم الجوال</label><input type="text" class="form-control" name="phone" id="edit_supplier_phone"></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ التعديلات</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editSupplier(id, code, name, address, phone) {
+    document.getElementById('editSupplierForm').action = '/suppliers/edit/' + id;
+    document.getElementById('edit_supplier_code').value = code;
+    document.getElementById('edit_supplier_name').value = name;
+    document.getElementById('edit_supplier_address').value = address;
+    document.getElementById('edit_supplier_phone').value = phone;
+    new bootstrap.Modal(document.getElementById('editSupplierModal')).show();
+}
+
+document.getElementById('searchSuppliers').addEventListener('input', function() {
+    const value = this.value.toLowerCase();
+    document.querySelectorAll('#suppliersTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(value) ? '' : 'none';
+    });
+});
+
+document.getElementById('suppliersLink').classList.add('active');
+</script>
+{% endblock %}

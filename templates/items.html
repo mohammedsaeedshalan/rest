@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الأصناف - نظام إدارة المطعم{% endblock %}
+
+{% block content %}
+<style>
+.form-select {
+    font-size: 1rem;
+    padding: 0.6rem 2.5rem 0.6rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-check-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+#add_custom_category, #edit_custom_category {
+    border: 2px dashed var(--primary-color);
+    background-color: #fff9f6;
+}
+</style>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: white; font-weight: 700;">
+            <i class="fas fa-box"></i> إدارة الأصناف
+        </h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+            <i class="fas fa-plus"></i> إضافة صنف جديد
+        </button>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-list"></i> قائمة الأصناف
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th>رقم الصنف</th>
+                            <th>اسم الصنف</th>
+                            <th>الفئة</th>
+                            <th>الكمية</th>
+                            <th>الحد الأدنى</th>
+                            <th>السعر</th>
+                            <th>الوصف</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td><strong>{{ item.item_code }}</strong></td>
+                            <td>{{ item.item_name }}</td>
+                            <td>
+                                {% if item.category %}
+                                    <span class="badge bg-info">{{ item.category }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.quantity <= item.min_quantity %}
+                                    <span class="badge bg-danger">{{ item.quantity }}</span>
+                                {% elif item.quantity <= item.min_quantity * 2 %}
+                                    <span class="badge bg-warning">{{ item.quantity }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ item.quantity }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.min_quantity }}</td>
+                            <td><strong>{{ "%.2f"|format(item.price) }} ريال</strong></td>
+                            <td>{{ item.description[:30] if item.description else '-' }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editItem({{ item.id }}, '{{ item.item_code }}', '{{ item.item_name }}', {{ item.quantity }}, {{ item.min_quantity }}, {{ item.price }}, '{{ item.category or '' }}', '{{ item.description or '' }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if current_user.role in ['admin', 'manager'] %}
+                                <a href="{{ url_for('delete_item', id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا الصنف؟')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> إضافة صنف جديد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_item') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">رقم الصنف</label>
+                        <input type="text" class="form-control" name="item_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم الصنف</label>
+                        <input type="text" class="form-control" name="item_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">التصنيف <span class="text-danger">*</span></label>
+                        <select class="form-select" name="category" id="add_category" required>
+                            <option value="">-- اختر التصنيف --</option>
+                            <option value="وجبات رئيسية">🍔 وجبات رئيسية</option>
+                            <option value="مشروبات">☕ مشروبات</option>
+                            <option value="بيتزا">🍕 بيتزا</option>
+                            <option value="سلطات">🥗 سلطات</option>
+                            <option value="مقبلات">🧀 مقبلات</option>
+                            <option value="حلويات">🍨 حلويات</option>
+                            <option value="أخرى">📦 أخرى</option>
+                        </select>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="addCustomCategory" onchange="toggleCustomCategory('add')">
+                            <label class="form-check-label" for="addCustomCategory">
+                                إضافة تصنيف مخصص
+                            </label>
+                        </div>
+                        <input type="text" class="form-control mt-2" id="add_custom_category" placeholder="أدخل التصنيف المخصص" style="display: none;">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">الكمية</label>
+                            <input type="number" step="0.01" class="form-control" name="quantity" value="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">الحد الأدنى للمخزون</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="min_quantity" value="5" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">السعر</label>
+                            <input type="number" step="0.01" class="form-control" name="price" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="modal fade" id="editItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> تعديل الصنف</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editItemForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">رقم الصنف</label>
+                        <input type="text" class="form-control" name="item_code" id="edit_item_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم الصنف</label>
+                        <input type="text" class="form-control" name="item_name" id="edit_item_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">التصنيف <span class="text-danger">*</span></label>
+                        <select class="form-select" name="category" id="edit_category" required>
+                            <option value="">-- اختر التصنيف --</option>
+                            <option value="وجبات رئيسية">🍔 وجبات رئيسية</option>
+                            <option value="مشروبات">☕ مشروبات</option>
+                            <option value="بيتزا">🍕 بيتزا</option>
+                            <option value="سلطات">🥗 سلطات</option>
+                            <option value="مقبلات">🧀 مقبلات</option>
+                            <option value="حلويات">🍨 حلويات</option>
+                            <option value="أخرى">📦 أخرى</option>
+                        </select>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="editCustomCategory" onchange="toggleCustomCategory('edit')">
+                            <label class="form-check-label" for="editCustomCategory">
+                                إضافة تصنيف مخصص
+                            </label>
+                        </div>
+                        <input type="text" class="form-control mt-2" id="edit_custom_category" placeholder="أدخل التصنيف المخصص" style="display: none;">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">الكمية</label>
+                            <input type="number" step="0.01" class="form-control" name="quantity" id="edit_quantity" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">الحد الأدنى للمخزون</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="min_quantity" id="edit_min_quantity" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">السعر</label>
+                            <input type="number" step="0.01" class="form-control" name="price" id="edit_price" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea class="form-control" name="description" id="edit_description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle custom category input
+function toggleCustomCategory(mode) {
+    const checkbox = document.getElementById(mode + 'CustomCategory');
+    const customInput = document.getElementById(mode + '_custom_category');
+    const categorySelect = document.getElementById(mode + '_category');
+
+    if (checkbox.checked) {
+        customInput.style.display = 'block';
+        categorySelect.disabled = true;
+        categorySelect.required = false;
+        customInput.required = true;
+    } else {
+        customInput.style.display = 'none';
+        categorySelect.disabled = false;
+        categorySelect.required = true;
+        customInput.required = false;
+        customInput.value = '';
+    }
+}
+
+// Handle form submission to use custom category if provided
+document.querySelector('#addItemModal form').addEventListener('submit', function(e) {
+    const customCategory = document.getElementById('add_custom_category').value.trim();
+    if (customCategory) {
+        document.getElementById('add_category').value = customCategory;
+    }
+});
+
+document.querySelector('#editItemModal form').addEventListener('submit', function(e) {
+    const customCategory = document.getElementById('edit_custom_category').value.trim();
+    if (customCategory) {
+        document.getElementById('edit_category').value = customCategory;
+    }
+});
+
+function editItem(id, code, name, quantity, minQuantity, price, category, description) {
+    document.getElementById('editItemForm').action = '/items/edit/' + id;
+    document.getElementById('edit_item_code').value = code;
+    document.getElementById('edit_item_name').value = name;
+    document.getElementById('edit_quantity').value = quantity;
+    document.getElementById('edit_min_quantity').value = minQuantity;
+    document.getElementById('edit_price').value = price;
+    document.getElementById('edit_description').value = description;
+
+    // Handle category selection
+    const categorySelect = document.getElementById('edit_category');
+    const predefinedCategories = ['وجبات رئيسية', 'مشروبات', 'بيتزا', 'سلطات', 'مقبلات', 'حلويات', 'أخرى'];
+
+    if (predefinedCategories.includes(category)) {
+        categorySelect.value = category;
+        document.getElementById('editCustomCategory').checked = false;
+        document.getElementById('edit_custom_category').style.display = 'none';
+    } else if (category) {
+        // Custom category
+        document.getElementById('editCustomCategory').checked = true;
+        document.getElementById('edit_custom_category').style.display = 'block';
+        document.getElementById('edit_custom_category').value = category;
+        categorySelect.disabled = true;
+        categorySelect.required = false;
+        document.getElementById('edit_custom_category').required = true;
+    } else {
+        categorySelect.value = '';
+    }
+
+    new bootstrap.Modal(document.getElementById('editItemModal')).show();
+}
+
+// Update sidebar active link
+document.getElementById('itemsLink').classList.add('active');
+</script>
+{% endblock %}
+

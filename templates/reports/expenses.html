@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}تقرير المصروفات - نظام إدارة المطعم{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: white; font-weight: 700;"><i class="fas fa-receipt"></i> تقرير المصروفات</h2>
+        <a href="{{ url_for('expenses') }}" class="btn btn-primary no-print"><i class="fas fa-plus"></i> شاشة المصروفات</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="fas fa-chart-line"></i> سجل المصروفات</div>
+        <div class="card-body">
+            <form class="row g-3 mb-4 no-print" method="GET">
+                <div class="col-md-4"><label class="form-label">من تاريخ</label><input type="date" class="form-control" name="from_date" value="{{ from_date or '' }}"></div>
+                <div class="col-md-4"><label class="form-label">إلى تاريخ</label><input type="date" class="form-control" name="to_date" value="{{ to_date or '' }}"></div>
+                <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit"><i class="fas fa-filter"></i> تصفية</button></div>
+            </form>
+            <div class="table-responsive"><table class="table table-hover">
+                <thead><tr><th>رقم المصروف</th><th>التاريخ</th><th>البند</th><th>المبلغ</th><th>طريقة الدفع</th><th>المسجل</th><th>ملاحظات</th></tr></thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td><strong>{{ expense.expense_number }}</strong></td>
+                        <td>{{ expense.expense_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ expense.category }}</td>
+                        <td><strong>{{ "%.2f"|format(expense.amount) }} ريال</strong></td>
+                        <td>{% if expense.payment_method == 'cash' %}نقدي{% elif expense.payment_method == 'card' %}شبكة{% else %}تحويل بنكي{% endif %}</td>
+                        <td>{{ expense.user.username }}</td>
+                        <td>{{ expense.notes or '-' }}</td>
+                    </tr>
+                    {% else %}<tr><td colspan="7" class="text-center text-muted">لا توجد مصروفات ضمن الفترة المحددة</td></tr>{% endfor %}
+                </tbody>
+                <tfoot><tr class="table-info"><td colspan="3"><strong>إجمالي المصروفات</strong></td><td colspan="4"><strong class="text-danger">{{ "%.2f"|format(total) }} ريال</strong></td></tr></tfoot>
+            </table></div>
+        </div>
+    </div>
+</div>
+<script>document.getElementById('expensesReportLink').classList.add('active');</script>
+{% endblock %}

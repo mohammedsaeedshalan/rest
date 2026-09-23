@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}تقارير رواتب العاملين - نظام إدارة المطعم{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: white; font-weight: 700;"><i class="fas fa-file-invoice-dollar"></i> تقارير رواتب العاملين</h2>
+        <a href="{{ url_for('employees') }}" class="btn btn-primary"><i class="fas fa-user-tie"></i> العاملين والرواتب</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="fas fa-chart-line"></i> سجل دفعات الرواتب</div>
+        <div class="card-body">
+            <form class="row g-3 mb-4" method="GET">
+                <div class="col-md-6"><label class="form-label">شهر الراتب</label><input type="month" class="form-control" name="payment_month" value="{{ payment_month or '' }}"></div>
+                <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit"><i class="fas fa-filter"></i> تصفية</button></div>
+                <div class="col-md-3 d-flex align-items-end"><a class="btn btn-outline-secondary w-100" href="{{ url_for('salary_payments_report') }}"><i class="fas fa-rotate-left"></i> عرض الكل</a></div>
+            </form>
+
+            <div class="table-responsive"><table class="table table-hover">
+                <thead><tr><th>رقم الدفعة</th><th>العامل</th><th>الجنسية</th><th>الشهر</th><th>المبلغ</th><th>طريقة الدفع</th><th>المسجل</th><th>تاريخ التسجيل</th><th>ملاحظات</th></tr></thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td><strong>{{ payment.payment_number }}</strong></td>
+                        <td>{{ payment.employee.employee_name }}</td>
+                        <td>{{ payment.employee.nationality }}</td>
+                        <td><span class="badge bg-info">{{ payment.payment_month }}</span></td>
+                        <td><strong>{{ "%.2f"|format(payment.amount) }} ريال</strong></td>
+                        <td>{% if payment.payment_method == 'cash' %}نقدي{% elif payment.payment_method == 'card' %}شبكة{% else %}تحويل بنكي{% endif %}</td>
+                        <td>{{ payment.user.username }}</td>
+                        <td>{{ payment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ payment.notes or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="9" class="text-center text-muted">لا توجد دفعات رواتب ضمن الفترة المحددة</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot><tr class="table-info"><td colspan="4"><strong>إجمالي الرواتب المدفوعة</strong></td><td colspan="5"><strong class="text-primary">{{ "%.2f"|format(total) }} ريال</strong></td></tr></tfoot>
+            </table></div>
+        </div>
+    </div>
+</div>
+<script>document.getElementById('salaryPaymentsReportLink').classList.add('active');</script>
+{% endblock %}

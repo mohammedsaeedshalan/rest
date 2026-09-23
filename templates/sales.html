@@ -105,6 +105,19 @@
             border-color: var(--primary-color);
         }
 
+        .item-card.selected {
+            animation: product-selected 0.45s ease;
+            border-color: #06D6A0;
+            box-shadow: 0 0 0 4px rgba(6, 214, 160, 0.18), 0 14px 26px rgba(6, 214, 160, 0.25);
+        }
+
+        @keyframes product-selected {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.04); }
+            70% { transform: scale(0.98); }
+            100% { transform: scale(1); }
+        }
+
         /* Cart Section */
         .cart-section {
             background: white;
@@ -116,6 +129,16 @@
             max-height: calc(100vh - 100px);
             overflow-y: auto;
             border: 1px solid #dce6f0;
+        }
+
+        .cart-section.cart-pulse {
+            animation: cart-pulse 0.35s ease;
+        }
+
+        @keyframes cart-pulse {
+            0% { transform: scale(1); box-shadow: 0 12px 30px rgba(8, 24, 47, 0.15); }
+            50% { transform: scale(1.01); box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.12), 0 18px 36px rgba(25, 118, 210, 0.16); }
+            100% { transform: scale(1); box-shadow: 0 12px 30px rgba(8, 24, 47, 0.15); }
         }
 
         .cart-header {
@@ -438,7 +461,7 @@
                     <div class="row" id="itemsGrid">
                         {% for item in items %}
                         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3 item-box" data-name="{{ item.item_name|lower }}" data-code="{{ item.item_code }}" data-category="{{ item.category if item.category else 'غير مصنف' }}">
-                            <div class="card item-card" onclick="addToCart({{ item.id }}, '{{ item.item_name }}', {{ item.price }}, {{ item.quantity }})">
+                            <div class="card item-card" data-item-id="{{ item.id }}" onclick="triggerProductSelection(this, {{ item.id }}, '{{ item.item_name }}', {{ item.price }}, {{ item.quantity }})">
                                 <div class="card-body text-center p-2">
                                     <div style="font-size: 2rem; margin-bottom: 5px;">
                                         {% if item.category == 'وجبات رئيسية' %}
@@ -620,7 +643,21 @@
 <script>
 let cart = [];
 let currentCategory = 'all';
-let heldInvoices = JSON.parse(localStorage.getItem('heldInvoices') || '[]');
+let heldInvoices = [];
+
+async function loadHeldInvoices() {
+    try {
+        const response = await fetch('/sales/held');
+        if (!response.ok) throw new Error('Failed to load held invoices');
+        const data = await response.json();
+        heldInvoices = Array.isArray(data) ? data : [];
+        localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
+    } catch (error) {
+        console.error('Failed to load held invoices from server:', error);
+        heldInvoices = JSON.parse(localStorage.getItem('heldInvoices') || '[]');
+    }
+    updateHeldBadge();
+}
 
 // Update held invoices badge
 function updateHeldBadge() {
@@ -635,7 +672,7 @@ function updateHeldBadge() {
 }
 
 // Initialize
-updateHeldBadge();
+loadHeldInvoices();
 
 // Filter by category
 function filterCategory(category) {
@@ -734,53 +771,99 @@ function holdInvoice() {
         return;
     }
 
-    const invoice = {
-        id: Date.now(),
-        date: new Date().toLocaleString('ar-SA'),
-        cart: [...cart],
-        customerId: document.getElementById('customerId').value,
-        customerName: document.getElementById('selectedCustomerName').value,
-        paymentMethod: document.getElementById('paymentMethod').value,
+    const total = cart.reduce((sum, item) => sum + item.total, 0);
+    const saleData = {
+        customer_id: document.getElementById('customerId').value || null,
+        total_amount: total,
+        payment_method: document.getElementById('paymentMethod').value,
+        paid_amount: parseFloat(document.getElementById('paidAmount').value) || 0,
+        remaining_amount: parseFloat(document.getElementById('remainingAmount').textContent) || 0,
         notes: document.getElementById('notes').value,
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        items: cart.map(item => ({
+            item_id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.total
+        }))
     };
 
-    heldInvoices.push(invoice);
-    localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
-    updateHeldBadge();
+    fetch('/sales/hold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saleData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('حدث خطأ في حفظ الفاتورة المعلقة: ' + (data.error || 'غير معروف'));
+            return;
+        }
 
-    // Clear cart
-    clearCart();
+        const invoice = {
+            id: data.sale_id,
+            sale_number: data.sale_number,
+            date: new Date().toLocaleString('ar-SA'),
+            cart: [...cart],
+            customerId: saleData.customer_id,
+            customerName: document.getElementById('selectedCustomerName').value,
+            paymentMethod: saleData.payment_method,
+            notes: saleData.notes,
+            total: total,
+            items: saleData.items.map(item => ({
+                id: item.item_id,
+                item_id: item.item_id,
+                name: cart.find(c => c.id === item.item_id)?.name || 'منتج',
+                price: item.price,
+                quantity: item.quantity,
+                total: item.total
+            }))
+        };
 
-    alert('تم تعليق الفاتورة بنجاح!');
+        heldInvoices.push(invoice);
+        localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
+        updateHeldBadge();
+
+        clearCart();
+        alert('تم تعليق الفاتورة بنجاح!');
+    })
+    .catch(error => {
+        console.error(error);
+        alert('حدث خطأ في حفظ الفاتورة المعلقة');
+    });
 }
 
 // Show Held Invoices
-function showHeldInvoices() {
+async function showHeldInvoices() {
+    await loadHeldInvoices();
     const modal = new bootstrap.Modal(document.getElementById('heldInvoicesModal'));
     const list = document.getElementById('heldInvoicesList');
 
     if (heldInvoices.length === 0) {
         list.innerHTML = '<p class="text-center text-muted">لا توجد فواتير معلقة</p>';
     } else {
-        list.innerHTML = heldInvoices.map((inv, index) => `
-            <div class="held-invoice-item" onclick="loadHeldInvoice(${index})">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1"><i class="fas fa-receipt"></i> فاتورة #${inv.id}</h6>
-                        <small><i class="fas fa-clock"></i> ${inv.date}</small><br>
-                        <small><i class="fas fa-user"></i> ${inv.customerName}</small>
-                    </div>
-                    <div class="text-end">
-                        <h5 class="mb-1 text-warning">${inv.total.toFixed(2)} ريال</h5>
-                        <small>${inv.cart.length} صنف</small><br>
-                        <button class="btn btn-sm btn-danger mt-2" onclick="event.stopPropagation(); deleteHeldInvoice(${index})">
-                            <i class="fas fa-trash"></i> حذف
-                        </button>
+        list.innerHTML = heldInvoices.map((inv, index) => {
+            const itemCount = Array.isArray(inv.items) ? inv.items.length : (inv.cart ? inv.cart.length : 0);
+            const total = Number(inv.total || 0).toFixed(2);
+            const name = inv.customerName || inv.customerName || 'عميل نقدي';
+            return `
+                <div class="held-invoice-item" onclick="loadHeldInvoice(${index})">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1"><i class="fas fa-receipt"></i> فاتورة #${inv.id || inv.sale_number || index + 1}</h6>
+                            <small><i class="fas fa-clock"></i> ${inv.date || new Date().toLocaleString('ar-SA')}</small><br>
+                            <small><i class="fas fa-user"></i> ${name}</small>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-1 text-warning">${total} ريال</h5>
+                            <small>${itemCount} صنف</small><br>
+                            <button class="btn btn-sm btn-danger mt-2" onclick="event.stopPropagation(); deleteHeldInvoice(${index})">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     modal.show();
@@ -789,39 +872,49 @@ function showHeldInvoices() {
 // Load Held Invoice
 function loadHeldInvoice(index) {
     const invoice = heldInvoices[index];
+    if (!invoice) return;
 
-    // Load cart
-    cart = [...invoice.cart];
+    const invoiceItems = Array.isArray(invoice.items) && invoice.items.length > 0
+        ? invoice.items
+        : (Array.isArray(invoice.cart) ? invoice.cart : []);
+
+    cart = invoiceItems.map(item => ({
+        id: item.item_id || item.id,
+        name: item.name || 'منتج',
+        price: Number(item.price || 0),
+        quantity: Number(item.quantity || 1),
+        total: Number(item.total || (Number(item.price || 0) * Number(item.quantity || 1))),
+        availableQty: Number.MAX_SAFE_INTEGER
+    }));
     updateCart();
 
-    // Load customer
-    if (invoice.customerId) {
-        document.getElementById('customerId').value = invoice.customerId;
-        document.getElementById('selectedCustomerName').value = invoice.customerName;
+    if (invoice.customerId || invoice.customer_id) {
+        document.getElementById('customerId').value = invoice.customerId || invoice.customer_id;
+        document.getElementById('selectedCustomerName').value = invoice.customerName || invoice.customer_name || 'عميل نقدي';
         document.getElementById('clearCustomerBtn').style.display = 'inline-block';
     }
 
-    // Load payment method and notes
-    document.getElementById('paymentMethod').value = invoice.paymentMethod;
-    document.getElementById('notes').value = invoice.notes;
+    document.getElementById('paymentMethod').value = invoice.paymentMethod || invoice.payment_method || 'cash';
+    document.getElementById('notes').value = invoice.notes || '';
 
-    // Remove from held invoices
-    heldInvoices.splice(index, 1);
-    localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
-    updateHeldBadge();
-
-    // Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('heldInvoicesModal'));
-    modal.hide();
+    if (modal) modal.hide();
 }
 
 // Delete Held Invoice
 function deleteHeldInvoice(index) {
     if (confirm('هل أنت متأكد من حذف هذه الفاتورة المعلقة؟')) {
+        const invoice = heldInvoices[index];
+        if (invoice && invoice.id) {
+            fetch(`/sales/held/${invoice.id}`, {
+                method: 'DELETE'
+            }).catch(error => console.error('Failed to delete held sale:', error));
+        }
+
         heldInvoices.splice(index, 1);
         localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
         updateHeldBadge();
-        showHeldInvoices(); // Refresh the list
+        showHeldInvoices();
     }
 }
 
@@ -841,6 +934,51 @@ document.getElementById('searchCustomer').addEventListener('input', function(e) 
     });
 });
 
+function playProductSound() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(660, ctx.currentTime);
+    oscillator.frequency.linearRampToValueAtTime(920, ctx.currentTime + 0.08);
+
+    gainNode.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.18);
+    oscillator.onended = () => ctx.close();
+}
+
+function triggerProductSelection(card, itemId, itemName, price, availableQty) {
+    document.querySelectorAll('.item-card').forEach(el => el.classList.remove('selected'));
+
+    if (card) {
+        card.classList.remove('selected');
+        void card.offsetWidth;
+        card.classList.add('selected');
+        setTimeout(() => card.classList.remove('selected'), 450);
+    }
+
+    const cartSection = document.querySelector('.cart-section');
+    if (cartSection) {
+        cartSection.classList.remove('cart-pulse');
+        void cartSection.offsetWidth;
+        cartSection.classList.add('cart-pulse');
+        setTimeout(() => cartSection.classList.remove('cart-pulse'), 350);
+    }
+
+    playProductSound();
+    addToCart(itemId, itemName, price, availableQty);
+}
+
 function addToCart(itemId, itemName, price, availableQty) {
     const existingItem = cart.find(item => item.id === itemId);
     
@@ -849,7 +987,7 @@ function addToCart(itemId, itemName, price, availableQty) {
             existingItem.quantity++;
             existingItem.total = existingItem.quantity * existingItem.price;
         } else {
-            alert('الكمية المتوفرة غير كافية');
+            alert('الكمية المتوفارة غير كافية');
             return;
         }
     } else {

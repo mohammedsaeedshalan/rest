@@ -847,6 +847,96 @@ def create_sale():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@app.route('/sales/hold', methods=['POST'])
+@login_required
+def hold_sale():
+    try:
+        data = request.get_json()
+
+        last_sale = Sale.query.order_by(Sale.id.desc()).first()
+        sale_number = f"HOLD-{(last_sale.id + 1) if last_sale else 1:06d}"
+
+        sale = Sale(
+            sale_number=sale_number,
+            customer_id=data.get('customer_id') if data.get('customer_id') else None,
+            user_id=current_user.id,
+            total_amount=float(data.get('total_amount')),
+            payment_method=data.get('payment_method'),
+            paid_amount=float(data.get('paid_amount', 0)),
+            remaining_amount=float(data.get('remaining_amount', 0)),
+            status='pending',
+            notes=data.get('notes')
+        )
+        db.session.add(sale)
+        db.session.flush()
+
+        for item_data in data.get('items', []):
+            sale_item = SaleItem(
+                sale_id=sale.id,
+                item_id=item_data['item_id'],
+                quantity=float(item_data['quantity']),
+                price=float(item_data['price']),
+                total=float(item_data['total'])
+            )
+            db.session.add(sale_item)
+
+        if data.get('payment_method') == 'credit' and data.get('customer_id'):
+            customer = Customer.query.get(data.get('customer_id'))
+            if customer:
+                customer.balance += float(data.get('remaining_amount', 0))
+
+        db.session.commit()
+        return jsonify({'success': True, 'sale_number': sale_number, 'sale_id': sale.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/sales/held', methods=['GET'])
+@login_required
+def get_held_sales():
+    sales = Sale.query.filter_by(status='pending').order_by(Sale.created_at.desc()).all()
+    result = []
+
+    for sale in sales:
+        item_data = []
+        for sale_item in sale.items:
+            item_data.append({
+                'id': sale_item.item_id,
+                'item_id': sale_item.item_id,
+                'name': sale_item.item.item_name if sale_item.item else 'غير معروف',
+                'price': float(sale_item.price),
+                'quantity': float(sale_item.quantity),
+                'total': float(sale_item.total)
+            })
+
+        result.append({
+            'id': sale.id,
+            'sale_number': sale.sale_number,
+            'customer_id': sale.customer_id,
+            'customerName': sale.customer.customer_name if sale.customer else 'عميل نقدي',
+            'paymentMethod': sale.payment_method,
+            'notes': sale.notes or '',
+            'date': sale.created_at.strftime('%Y-%m-%d %H:%M:%S') if sale.created_at else '',
+            'total': float(sale.total_amount),
+            'items': item_data
+        })
+
+    return jsonify(result)
+
+@app.route('/sales/held/<int:sale_id>', methods=['DELETE'])
+@login_required
+def delete_held_sale(sale_id):
+    try:
+        sale = Sale.query.get_or_404(sale_id)
+        if sale.status != 'pending':
+            return jsonify({'success': False, 'error': 'هذه الفاتورة ليست معلقة'}), 400
+        db.session.delete(sale)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 # Reports
 @app.route('/reports/sales')
 @login_required

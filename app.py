@@ -633,6 +633,21 @@ def edit_salary_payment(id):
         flash(f'حدث خطأ: {str(e)}', 'danger')
     return redirect(url_for('salary_payments', employee_id=employee_id))
 
+@app.route('/salary-payments/delete/<int:id>', methods=['POST'])
+@login_required
+@manager_required
+def delete_salary_payment(id):
+    payment = SalaryPayment.query.get_or_404(id)
+    employee_id = payment.employee_id
+    try:
+        db.session.delete(payment)
+        db.session.commit()
+        flash('تم حذف دفعة الراتب بنجاح', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ: {str(e)}', 'danger')
+    return redirect(url_for('salary_payments', employee_id=employee_id))
+
 # Daily Expenses
 @app.route('/expenses')
 @login_required

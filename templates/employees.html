@@ -24,7 +24,7 @@
                             <td>{{ employee.salary_payments|length }} دفعة</td>
                             <td>
                                 <a href="{{ url_for('salary_payments', employee_id=employee.id) }}" class="btn btn-sm btn-success" title="دفعات الراتب"><i class="fas fa-money-bill-wave"></i></a>
-                                <button class="btn btn-sm btn-primary" onclick="editEmployee({{ employee.id }}, {{ employee.employee_name|tojson }}, {{ employee.nationality|tojson }}, {{ employee.monthly_salary }})" title="تعديل"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-primary" onclick="editEmployee({{ employee.id }}, {{ employee.employee_name|tojson }}, {{ employee.nationality|tojson }}, {{ employee.monthly_salary }})" title="تعديل بيانات العامل والراتب"><i class="fas fa-edit"></i></button>
                                 {% if current_user.role in ['admin', 'manager'] %}
                                 <a href="{{ url_for('delete_employee', id=employee.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا العامل؟')" title="حذف"><i class="fas fa-trash"></i></a>
                                 {% endif %}
@@ -59,7 +59,7 @@
 <div class="modal fade" id="editEmployeeModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end)); color: white;"><h5 class="modal-title"><i class="fas fa-edit"></i> تعديل بيانات العامل</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end)); color: white;"><h5 class="modal-title"><i class="fas fa-edit"></i> تعديل بيانات العامل والراتب</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <form method="POST" id="editEmployeeForm">
                 <div class="modal-body">
                     <div class="mb-3"><label class="form-label">اسم العامل</label><input type="text" class="form-control" name="employee_name" id="edit_employee_name" required></div>

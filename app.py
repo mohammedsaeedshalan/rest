@@ -291,9 +291,18 @@ def items():
 @app.route('/items/add', methods=['POST'])
 @login_required
 def add_item():
+    item_code = (request.form.get('item_code') or '').strip()
+    if not item_code:
+        flash('يرجى إدخال رقم الصنف', 'danger')
+        return redirect(url_for('items'))
+
+    if Item.query.filter_by(item_code=item_code).first():
+        flash('رقم الصنف موجود مسبقًا، يرجى اختيار رقم مختلف', 'danger')
+        return redirect(url_for('items'))
+
     try:
         item = Item(
-            item_code=request.form.get('item_code'),
+            item_code=item_code,
             item_name=request.form.get('item_name'),
             quantity=float(request.form.get('quantity', 0)),
             min_quantity=float(request.form.get('min_quantity', 5)),
@@ -312,9 +321,19 @@ def add_item():
 @app.route('/items/edit/<int:id>', methods=['POST'])
 @login_required
 def edit_item(id):
+    item_code = (request.form.get('item_code') or '').strip()
+    if not item_code:
+        flash('يرجى إدخال رقم الصنف', 'danger')
+        return redirect(url_for('items'))
+
+    item = Item.query.get_or_404(id)
+    existing_item = Item.query.filter(Item.item_code == item_code, Item.id != item.id).first()
+    if existing_item:
+        flash('رقم الصنف موجود مسبقًا، يرجى اختيار رقم مختلف', 'danger')
+        return redirect(url_for('items'))
+
     try:
-        item = Item.query.get_or_404(id)
-        item.item_code = request.form.get('item_code')
+        item.item_code = item_code
         item.item_name = request.form.get('item_name')
         item.quantity = float(request.form.get('quantity', 0))
         item.min_quantity = float(request.form.get('min_quantity', 5))

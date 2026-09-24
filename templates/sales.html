@@ -651,10 +651,9 @@ async function loadHeldInvoices() {
         if (!response.ok) throw new Error('Failed to load held invoices');
         const data = await response.json();
         heldInvoices = Array.isArray(data) ? data : [];
-        localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
     } catch (error) {
         console.error('Failed to load held invoices from server:', error);
-        heldInvoices = JSON.parse(localStorage.getItem('heldInvoices') || '[]');
+        heldInvoices = [];
     }
     updateHeldBadge();
 }
@@ -820,7 +819,6 @@ function holdInvoice() {
         };
 
         heldInvoices.push(invoice);
-        localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
         updateHeldBadge();
 
         clearCart();
@@ -912,7 +910,6 @@ function deleteHeldInvoice(index) {
         }
 
         heldInvoices.splice(index, 1);
-        localStorage.setItem('heldInvoices', JSON.stringify(heldInvoices));
         updateHeldBadge();
         showHeldInvoices();
     }

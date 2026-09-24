@@ -11,6 +11,8 @@ services:
         fromDatabase:
           name: restaurant-db
           property: connectionString
+      - key: RENDER
+        value: true
 
 databases:
   - name: restaurant-db

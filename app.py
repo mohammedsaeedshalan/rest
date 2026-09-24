@@ -8,12 +8,19 @@ import os
 from sqlalchemy import inspect, text
 
 app = Flask(__name__)
-database_url = os.getenv('DATABASE_URL', 'sqlite:///restaurant.db')
+database_url = os.getenv('DATABASE_URL', os.getenv('POSTGRES_URL', '')).strip()
+if not database_url:
+    database_url = f"sqlite:///{os.path.join(app.instance_path, 'restaurant.db')}"
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here-change-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+os.makedirs(app.instance_path, exist_ok=True)
+
+if os.getenv('RENDER') and database_url.startswith('sqlite:'):
+    raise RuntimeError('DATABASE_URL must point to a persistent PostgreSQL database on Render')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
